@@ -51,7 +51,6 @@ impl CEP47Instance {
         &self,
         sender: AccountHash,
         recipient: T,
-        token_id: TokenId,
         token_meta: Meta,
     ) {
         self.0.call_contract(
@@ -59,7 +58,6 @@ impl CEP47Instance {
             "mint",
             runtime_args! {
                 "recipient" => recipient.into(),
-                "token_ids" => vec![token_id],
                 "token_metas" => vec![token_meta]
             },
         )
@@ -69,7 +67,6 @@ impl CEP47Instance {
         &self,
         sender: AccountHash,
         recipient: T,
-        token_ids: Vec<TokenId>,
         token_meta: Meta,
         count: u32,
     ) {
@@ -78,7 +75,6 @@ impl CEP47Instance {
             "mint_copies",
             runtime_args! {
                 "recipient" => recipient.into(),
-                "token_ids" => token_ids,
                 "token_meta" => token_meta,
                 "count" => count
             },
@@ -89,7 +85,6 @@ impl CEP47Instance {
         &self,
         sender: AccountHash,
         recipient: T,
-        token_ids: Vec<TokenId>,
         token_metas: Vec<Meta>,
     ) {
         self.0.call_contract(
@@ -97,7 +92,6 @@ impl CEP47Instance {
             "mint",
             runtime_args! {
                 "recipient" => recipient.into(),
-                "token_ids" => token_ids,
                 "token_metas" => token_metas
             },
         )
