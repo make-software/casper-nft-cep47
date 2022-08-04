@@ -27,6 +27,7 @@ pub trait CEP47<Storage: ContractStorage>: ContractContext<Storage> {
         data::set_name(name);
         data::set_symbol(symbol);
         data::set_meta(meta);
+        data::init_next_tokenid();
         data::set_total_supply(U256::zero());
         Owners::init();
         OwnedTokens::init();
@@ -90,27 +91,22 @@ pub trait CEP47<Storage: ContractStorage>: ContractContext<Storage> {
     fn mint(
         &mut self,
         recipient: Key,
-        token_ids: Vec<TokenId>,
         token_metas: Vec<Meta>,
     ) -> Result<Vec<TokenId>, Error> {
-        if token_ids.len() != token_metas.len() {
-            return Err(Error::WrongArguments);
-        };
-
-        for token_id in &token_ids {
-            if self.owner_of(*token_id).is_some() {
-                return Err(Error::TokenIdAlreadyExists);
-            }
-        }
-
         let owners_dict = Owners::instance();
         let owned_tokens_dict = OwnedTokens::instance();
         let metadata_dict = Metadata::instance();
 
-        for (token_id, token_meta) in token_ids.iter().zip(&token_metas) {
-            metadata_dict.set(token_id, token_meta.clone());
-            owners_dict.set(token_id, recipient);
-            owned_tokens_dict.set_token(&recipient, token_id);
+        let mut token_ids: Vec<TokenId> =  Vec::new();
+
+        for token_meta in token_metas {
+            let token_id = data::get_next_tokenid();
+            metadata_dict.set(&token_id, token_meta.clone());
+            owners_dict.set(&token_id, recipient);
+            owned_tokens_dict.set_token(&recipient, &token_id);
+
+            token_ids.push(token_id);
+            data::incr_next_tokenid();
         }
 
         let minted_tokens_count: U256 = From::<u64>::from(token_ids.len().try_into().unwrap());
@@ -129,12 +125,11 @@ pub trait CEP47<Storage: ContractStorage>: ContractContext<Storage> {
     fn mint_copies(
         &mut self,
         recipient: Key,
-        token_ids: Vec<TokenId>,
         token_meta: Meta,
         count: u32,
     ) -> Result<Vec<TokenId>, Error> {
         let token_metas = vec![token_meta; count.try_into().unwrap()];
-        self.mint(recipient, token_ids, token_metas)
+        self.mint(recipient, token_metas)
     }
 
     fn burn(&mut self, owner: Key, token_ids: Vec<TokenId>) -> Result<(), Error> {

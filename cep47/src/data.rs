@@ -24,6 +24,7 @@ pub const NAME: &str = "name";
 pub const META: &str = "meta";
 pub const SYMBOL: &str = "symbol";
 pub const TOTAL_SUPPLY: &str = "total_supply";
+pub const NEXT_TOKENID: &str = "next_tokenid";
 
 pub struct Owners {
     dict: Dict,
@@ -226,6 +227,21 @@ pub fn total_supply() -> U256 {
 
 pub fn set_total_supply(total_supply: U256) {
     set_key(TOTAL_SUPPLY, total_supply);
+}
+
+pub fn init_next_tokenid() {
+    set_key(NEXT_TOKENID, U256::one());
+}
+
+pub fn get_next_tokenid() -> U256 {
+    get_key(NEXT_TOKENID).unwrap_or_revert()
+}
+
+pub fn incr_next_tokenid() {
+    let new_next_tokenid = get_next_tokenid()
+        .checked_add(U256::one())
+        .unwrap();
+    set_key(NEXT_TOKENID, new_next_tokenid);
 }
 
 pub fn contract_package_hash() -> ContractPackageHash {
