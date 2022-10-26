@@ -181,19 +181,31 @@ fn call() {
         "meta" => meta
     };
 
+    let contract_package_hash_name: String = format!("{}_contract_package_hash", contract_name);
+    let contract_access_uref: String = format!("{}_access_uref", contract_name);
+
     let (contract_hash, _) = storage::new_contract(
         get_entry_points(),
         None,
-        Some(String::from("contract_package_hash")),
-        None,
+        Some(contract_package_hash_name.clone()),
+        Some(contract_access_uref)
     );
 
     let package_hash: ContractPackageHash = ContractPackageHash::new(
-        runtime::get_key("contract_package_hash")
+        runtime::get_key(&contract_package_hash_name)
             .unwrap_or_revert()
             .into_hash()
             .unwrap_or_revert(),
     );
+
+    let mut admin_group = storage::create_contract_user_group(
+        package_hash,
+        "admin_group",
+        1,
+        Default::default(),
+    )
+    .unwrap();
+    runtime::put_key(&format!("{}_admin_access_uref", contract_name), admin_group.pop().unwrap().into());
 
     let constructor_access: URef =
         storage::create_contract_user_group(package_hash, "constructor", 1, Default::default())
@@ -287,7 +299,7 @@ fn get_entry_points() -> EntryPoints {
             Parameter::new("token_meta", Meta::cl_type()),
         ],
         <()>::cl_type(),
-        EntryPointAccess::Public,
+        EntryPointAccess::Groups(vec![Group::new("admin_group")]),
         EntryPointType::Contract,
     ));
     entry_points.add_entry_point(EntryPoint::new(
